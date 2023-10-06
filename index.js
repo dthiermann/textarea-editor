@@ -1,5 +1,11 @@
 let content = document.getElementById("content");
 
+content.value = localStorage.getItem("text");
+
+// want textarea content to persist after refresh
+// we want to store textarea content in some data structure
+// window onload, refill textarea with content
+
 content.focus();
 
 let mode = "insert";
@@ -7,11 +13,11 @@ let mode = "insert";
 let enterNavModeKey = "`";
 let enterInsertModeKey = "i";
 
-console.log(mode);
 
 content.addEventListener("keydown", handleKey);
 
 function handleKey(event) {
+    
     if (mode == "insert") {
         handleInsert(event);
     }
@@ -26,9 +32,8 @@ function handleInsert(event) {
         event.preventDefault();
         mode = "navigate";
     }
-    console.log(mode);
-    console.log(key);
-
+    else {
+    }
 }
 
 function handleNav(event) {
@@ -38,7 +43,4 @@ function handleNav(event) {
         mode = "insert";
         
     }
-    console.log(mode);
-    console.log(key);
-
 }
