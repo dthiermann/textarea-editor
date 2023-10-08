@@ -1,10 +1,22 @@
 let content = document.getElementById("content");
 
-content.value = localStorage.getItem("text");
+content.addEventListener("keyup", updateStorage);
 
-// want textarea content to persist after refresh
-// we want to store textarea content in some data structure
-// window onload, refill textarea with content
+window.addEventListener("load", updateContent);
+
+function updateStorage(event) {
+    localStorage.setItem("text", content.value);
+}
+
+function updateContent(event) {
+    if (localStorage.getItem("text")) {
+        content.value = localStorage.getItem("text");
+    }
+    else {
+        content.value = "";
+    }
+}
+
 
 content.focus();
 
@@ -17,30 +29,20 @@ let enterInsertModeKey = "i";
 content.addEventListener("keydown", handleKey);
 
 function handleKey(event) {
-    
+    let key = event.key;
     if (mode == "insert") {
-        handleInsert(event);
+
     }
     else if (mode == "navigate") {
-        handleNav(event);
+        navModeHandle(key);
     }
 }
 
-function handleInsert(event) {
-    let key = event.key;
-    if (key == enterNavModeKey) {
-        event.preventDefault();
-        mode = "navigate";
-    }
-    else {
-    }
-}
 
-function handleNav(event) {
-    event.preventDefault();
-    let key = event.key;
+function navModeHandle(key) {
     if (key == enterInsertModeKey) {
         mode = "insert";
         
     }
 }
+
