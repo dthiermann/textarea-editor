@@ -1,7 +1,7 @@
 let content = document.getElementById("content");
 
+content.addEventListener("keydown", handleKey);
 content.addEventListener("keyup", updateStorage);
-
 window.addEventListener("load", updateContent);
 
 function updateStorage(event) {
@@ -17,16 +17,12 @@ function updateContent(event) {
     }
 }
 
-
 content.focus();
 
 let mode = "insert";
 
 let enterNavModeKey = "`";
 let enterInsertModeKey = "i";
-
-
-content.addEventListener("keydown", handleKey);
 
 function handleKey(event) {
     let key = event.key;
