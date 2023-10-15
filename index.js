@@ -48,21 +48,17 @@ function handleKey(event) {
 
 
 function navModeHandle(key) {
-    if (key == enterInsertModeKey) {
-        mode = "insert";
-        
-    }
-    else {
-        let selection = window.getSelection();
-        switch (key) {
-            case moveLeftOneChar: {
-                selection.modify("move", "left", "character");
-            }
-                moveRightOneChar: {
-                    selection.modify("move", "right", "character");
-                }
-        }
-        
+    switch (key) {
+        case enterInsertModeKey:
+            mode = "insert";
+        case moveLeftOneChar:
+            content.selectionStart --;
+            content.selectionEnd --;
+            break;
+        case moveRightOneChar:
+            content.selectionStart ++;
+            content.SelectionEnd ++;
+            break;
     }
 }
 
