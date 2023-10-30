@@ -3,24 +3,30 @@ let content = document.getElementById("content");
 let mode = "insert";
 
 content.addEventListener("keydown", handleKey);
-content.addEventListener("keyup", updateStorage);
-window.addEventListener("load", updateContent);
+content.addEventListener("keyup", save);
+window.addEventListener("load", onLoad);
 
 
-
-function updateStorage(event) {
+function save(event) {
     localStorage.setItem("text", content.value);
     localStorage.setItem("mode", mode);
+
+    localStorage.setItem("start", content.selectionStart);
+    localStorage.setItem("end", content.selectionEnd);
+
 }
 
-function updateContent(event) {
-    if (localStorage.getItem("text")) {
-        content.value = localStorage.getItem("text");
-    }
-    else {
-        content.value = "";
-    }
+function onLoad(event) {
+    content.focus();
+    content.value = localStorage.getItem("text");
     localStorage.getItem("mode");
+
+    let start = localStorage.getItem("start");
+    let end = localStorage.getItem("end");
+
+    content.selectionStart = start;
+    content.selectionEnd = end;
+
 }
 
 
@@ -35,8 +41,6 @@ commands.set("k", moveRightOneChar);
 
 let enterNavModeKey = "`";
 
-// insert mode: can enter nav mode, or do default insert action
-// nav mode: can enter insert mode, or do nav action
 
 content.addEventListener("keydown", handleKey);
 
@@ -47,16 +51,13 @@ function handleKey(event) {
             event.preventDefault();
             mode = "navigate";
         }
-
+        insertLetterInNode(key, textTree);
     }
     else if (mode == "navigate") {
         event.preventDefault();
         navModeHandle(key);
     }
 }
-
-
-
 
 function navModeHandle(key) {
     commands.get(key)();
@@ -77,8 +78,22 @@ function moveRightOneChar() {
     content.selectionStart ++;
 }
 
+function moveToLineStart() {
+    // move selectionstart back to the most recent newline
+    
+}
 
+// try displaying each letter in a div to see if it looks good
+// let newdiv = document.createElement("div");
+let newContent = document.createTextNode("H");
 
+let newDiv = document.createElement("div");
+let nextDiv = document.createElement("div");
+document.body.appendChild(newDiv);
+document.body.appendChild(nextDiv);
+
+nextDiv.textContent = "b";
+newDiv.textContent = "a";
 
 // command mode and insert mode
 
@@ -89,8 +104,35 @@ function moveRightOneChar() {
 // DELETE: delete selection
 // i: insert, replacing current selection
 
-// tree: list of children
-// leaf: string
-// at the beginning, an empty tree
+class Node {
+    constructor(children, parent, text) {
+        this.children = children;
+        this.parent = parent;
+        this.text = text;
+    }
+}
 
+// make a node with entered text
+let textTree = new Node([], null, "");
+
+function insertLetterInNode(letter, node) {
+    node.text += letter;
+    console.log(node.text);
+}
+
+
+
+function insertChar(letter, word, index) {
+    let newWord = word.slice(0, index) + letter + word.slice(index);
+    index++;
+    return newWord;
+}
+
+
+
+
+
+let separator = " ";
+let leftGroup = "(";
+let rightGroup = ")";
 
