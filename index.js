@@ -19,7 +19,9 @@ function save(event) {
 function onLoad(event) {
     content.focus();
     content.value = localStorage.getItem("text");
-    localStorage.getItem("mode");
+    mode = localStorage.getItem("mode");
+
+    console.log(mode);
 
     let start = localStorage.getItem("start");
     let end = localStorage.getItem("end");
@@ -36,6 +38,9 @@ let commands = new Map();
 commands.set("i", enterInsertMode);
 commands.set("j", moveLeftOneChar);
 commands.set("k", moveRightOneChar);
+commands.set("e", moveBackToSpace);
+commands.set("r", moveToNextSpace);
+commands.set("`", null);
 
 
 
@@ -51,7 +56,6 @@ function handleKey(event) {
             event.preventDefault();
             mode = "navigate";
         }
-        insertLetterInNode(key, textTree);
     }
     else if (mode == "navigate") {
         event.preventDefault();
@@ -78,61 +82,45 @@ function moveRightOneChar() {
     content.selectionStart ++;
 }
 
-function moveToLineStart() {
-    // move selectionstart back to the most recent newline
-    
+// move cursor back to right before last occurence of char
+function moveCursorToRecent(char) {
+    let i = getRecentOccurence(content.selectionStart, char, content.value);
+    content.selectionStart = i;
+    content.selectionEnd = i;
 }
 
-// try displaying each letter in a div to see if it looks good
-// let newdiv = document.createElement("div");
-let newContent = document.createTextNode("H");
+function moveCursorToNext(char) {
+    let i = getNextOccurence(content.selectionStart, char, content.value);
+    content.selectionEnd = i;
+    content.selectionStart = i;
+}
 
-let newDiv = document.createElement("div");
-let nextDiv = document.createElement("div");
-document.body.appendChild(newDiv);
-document.body.appendChild(nextDiv);
 
-nextDiv.textContent = "b";
-newDiv.textContent = "a";
-
-// command mode and insert mode
-
-// select parent node
-// select first child
-// move selection to adjacent sibling (up/down)
-// insert to right/left of current node
-// DELETE: delete selection
-// i: insert, replacing current selection
-
-class Node {
-    constructor(children, parent, text) {
-        this.children = children;
-        this.parent = parent;
-        this.text = text;
+// returns (k + 1), where text[k] is next occurence of char,
+// including character at current index
+function getNextOccurence(current, char, text) {
+    let i = current;
+    while (text[i] != char && i < text.length) {
+        i ++;
     }
+    return i+1;
 }
 
-// make a node with entered text
-let textTree = new Node([], null, "");
-
-function insertLetterInNode(letter, node) {
-    node.text += letter;
-    console.log(node.text);
-}
-
-
-
-function insertChar(letter, word, index) {
-    let newWord = word.slice(0, index) + letter + word.slice(index);
-    index++;
-    return newWord;
+// returns k, where text[k] is most recent occurence of char,
+// not including character at current index,
+function getRecentOccurence(current, char, text) {
+    let i = current - 1;
+    while (text[i] != char && i > 0) {
+        i --;
+    }
+    return i;
 }
 
 
+function moveBackToSpace() {
+    return moveCursorToRecent(" ");
+}
 
-
-
-let separator = " ";
-let leftGroup = "(";
-let rightGroup = ")";
-
+function moveToNextSpace() {
+    return moveCursorToNext(" ");
+}
