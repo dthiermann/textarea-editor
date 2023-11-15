@@ -1,21 +1,23 @@
 let content = document.getElementById("content");
 let displayedCommands = document.getElementById("commands");
+let displayedMode = document.getElementById("mode");
 
-content.addEventListener("keydown", handleKey);
-content.addEventListener("keyup", save);
+window.addEventListener("keydown", handleKey);
+window.addEventListener("keyup", save);
 window.addEventListener("load", onLoad);
 
 let leftGroupKey = "(";
 let rightGroupKey = ")";
 let separatorKey = " ";
 
-let mode = "";
-
+let mode = "command";
 
 function save(event) {
     localStorage.setItem("text", content.value);
     localStorage.setItem("start", content.selectionStart);
     localStorage.setItem("end", content.selectionEnd);
+
+    displayedMode.textContent = "mode: " + mode;
 
 }
 
@@ -28,6 +30,8 @@ function onLoad(event) {
 
     mode = "command";
 
+    displayedMode.textContent = "mode: " + mode;
+
     content.selectionStart = start;
     content.selectionEnd = end;
 
@@ -39,7 +43,6 @@ let enterCommandModeKey = "`";
 let enterInsertModeKey = "i";
 
 commands.set("`", doNothing);
-commands.set("i", enterInsertMode);
 commands.set("j", moveLeftOneChar);
 commands.set("k", moveRightOneChar);
 commands.set("e", moveBackToSpace);
@@ -47,6 +50,8 @@ commands.set("r", moveToNextSpace);
 commands.set("s", selectParentExpr);
 commands.set("w", selectWord)
 commands.set("x", deleteSelection);
+commands.set("l", collapseLeft);
+commands.set("h", collapseRight)
 
 function doNothing() {
     return 0;
@@ -108,10 +113,6 @@ function command(key) {
     }
 }
 
-function enterInsertMode() {
-    localStorage.setItem("mode", "insert");
-}
-
 function moveLeftOneChar() {
     content.selectionStart --;
     content.selectionEnd --;
@@ -138,9 +139,11 @@ function moveCursorToNext(char) {
 
 // return index of next occurence of char
 // (including current index)
+// if no later occurence, should return total length of text
 function getNextOccurence(startingIndex, char) {
-    let text = content.value;
     let i = startingIndex;
+    let text = content.value;
+
     while (text[i] != char && i < text.length) {
         i ++;
     }
@@ -149,11 +152,12 @@ function getNextOccurence(startingIndex, char) {
 
 // returns index of previous occurence of char
 // (including current index)
+// if no previous occurrence, should return 0
 function getPreviousOccurence(startingIndex, char) {
-    let text = content.value;
     let i = startingIndex;
+    let text = content.value;
 
-    while (text[i] != char && i >= 0) {
+    while (text[i] != char && i > 0) {
         i --;
     }
     return i;
@@ -169,23 +173,37 @@ function moveToNextSpace() {
 }
 
 function selectParentExpr() {
-    
+
+    content.selectionStart = 0;
+    content.selectionEnd = content.value.length;
 }
 
 function deleteSelection() {
-    let text = content.value;
+    let leftCut = Math.min(content.selectionStart, content.selectionEnd);
+    let rightCut = Math.max(content.selectionStart, content.selectionEnd);
 
-    let start = content.selectionStart;
-    let end = content.selectionEnd;
-
-    let before = text.substring(0, start);
-    let after = text.substring(end);
+    let before = content.value.substring(0, leftCut);
+    let after = content.value.substring(rightCut);
 
     content.value = before + after;
+
+    content.selectionStart = leftCut;
+    content.selectionEnd = leftCut;
 }
 
-// in command mode
-// want to be able to type a character to invoke a function
-// and then type characters to supply arguments
+function collapseRight() {
+    content.selectionStart = content.selectionEnd;
+}
 
-// 
+function collapseLeft() {
+    content.selectionEnd = content.selectionStart;
+}
+
+// if the textarea becomes unfocused, the selection goes away
+// want to be able to focus the textarea and get a cursor anywhere
+// want mode switching to work even when the text box is not selected
+
+// when the textarea is not selected, selectionStart and selectionEnd
+// are null (I think)
+// need to examine how command functions behave with null arguments
+
