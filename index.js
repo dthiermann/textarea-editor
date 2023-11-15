@@ -1,16 +1,19 @@
 let content = document.getElementById("content");
-
-let mode = "insert";
+let displayedCommands = document.getElementById("commands");
 
 content.addEventListener("keydown", handleKey);
 content.addEventListener("keyup", save);
 window.addEventListener("load", onLoad);
 
+let leftGroupKey = "(";
+let rightGroupKey = ")";
+let separatorKey = " ";
+
+let mode = "";
+
 
 function save(event) {
     localStorage.setItem("text", content.value);
-    localStorage.setItem("mode", mode);
-
     localStorage.setItem("start", content.selectionStart);
     localStorage.setItem("end", content.selectionEnd);
 
@@ -19,57 +22,94 @@ function save(event) {
 function onLoad(event) {
     content.focus();
     content.value = localStorage.getItem("text");
-    mode = localStorage.getItem("mode");
-
-    console.log(mode);
 
     let start = localStorage.getItem("start");
     let end = localStorage.getItem("end");
+
+    mode = "command";
 
     content.selectionStart = start;
     content.selectionEnd = end;
 
 }
 
-
-
 let commands = new Map();
 
+let enterCommandModeKey = "`";
+let enterInsertModeKey = "i";
+
+commands.set("`", doNothing);
 commands.set("i", enterInsertMode);
 commands.set("j", moveLeftOneChar);
 commands.set("k", moveRightOneChar);
 commands.set("e", moveBackToSpace);
 commands.set("r", moveToNextSpace);
-commands.set("`", null);
+commands.set("s", selectParentExpr);
+commands.set("w", selectWord)
+commands.set("x", deleteSelection);
 
+function doNothing() {
+    return 0;
+}
 
+function displayCommands() {
+    commands.forEach((value, key) => {
+        let row = document.createElement("div");
+        row.textContent = `${key}  ${value.name}`;
+        displayedCommands.appendChild(row);
+    });
+}
 
-let enterNavModeKey = "`";
-
-
-content.addEventListener("keydown", handleKey);
+displayCommands();
 
 function handleKey(event) {
     let key = event.key;
     if (mode == "insert") {
-        if (key == enterNavModeKey) {
+        if (key == enterCommandModeKey) {
             event.preventDefault();
-            mode = "navigate";
+            mode = "command";
+        }
+        else {
+            mode = "insert";
         }
     }
-    else if (mode == "navigate") {
+    else if (mode == "command") {
         event.preventDefault();
-        navModeHandle(key);
+        if (key == enterInsertModeKey) {
+            mode = "insert";
+        }
+        else {
+            command(key);
+            mode = "command";
+        }
     }
 }
+// (enterCommandModeKey, insert) --> (do-nothing, command)
+// (anyOtherKey, insert) --> (default-action, insert)
+// (enterInsertModeKey, command) --> (do-nothing, insert)
+// (anyOtherKey, command) --> (do-command, command)
+// (key, mode) --> (action, newMode)
+// key + (selection, text, mode) --> (newSelection, newText, newMode)
 
-function navModeHandle(key) {
-    commands.get(key)();
-    
+// enterInsertModeKey, command --> preventDefault, insert
+// otherKey, command --> preventDefault, command
+// enterCommandModeKey, insert --> preventDefault, command
+// otherKey, insert --> insert
+function selectWord() {
+    let start = content.selectionStart;
+    let end = content.selectionEnd;
+    content.selectionStart = getPreviousOccurence(start, " ") + 1;
+    content.selectionEnd = getNextOccurence(end, " ");
+}
+
+function command(key) {
+    if (commands.has(key)) {
+        commands.get(key)();
+    }
 }
 
 function enterInsertMode() {
-    mode = "insert";
+    localStorage.setItem("mode", "insert");
 }
 
 function moveLeftOneChar() {
@@ -83,34 +123,37 @@ function moveRightOneChar() {
 }
 
 // move cursor back to right before last occurence of char
-function moveCursorToRecent(char) {
-    let i = getRecentOccurence(content.selectionStart, char, content.value);
+function moveCursorToPrevious(char) {
+    let i = getPreviousOccurence(content.selectionStart, char);
     content.selectionStart = i;
     content.selectionEnd = i;
 }
 
 function moveCursorToNext(char) {
-    let i = getNextOccurence(content.selectionStart, char, content.value);
+    let i = getNextOccurence(content.selectionStart, char);
     content.selectionEnd = i;
     content.selectionStart = i;
 }
 
 
-// returns (k + 1), where text[k] is next occurence of char,
-// including character at current index
-function getNextOccurence(current, char, text) {
-    let i = current;
+// return index of next occurence of char
+// (including current index)
+function getNextOccurence(startingIndex, char) {
+    let text = content.value;
+    let i = startingIndex;
     while (text[i] != char && i < text.length) {
         i ++;
     }
-    return i+1;
+    return i;
 }
 
-// returns k, where text[k] is most recent occurence of char,
-// not including character at current index,
-function getRecentOccurence(current, char, text) {
-    let i = current - 1;
-    while (text[i] != char && i > 0) {
+// returns index of previous occurence of char
+// (including current index)
+function getPreviousOccurence(startingIndex, char) {
+    let text = content.value;
+    let i = startingIndex;
+
+    while (text[i] != char && i >= 0) {
         i --;
     }
     return i;
@@ -118,9 +161,31 @@ function getRecentOccurence(current, char, text) {
 
 
 function moveBackToSpace() {
-    return moveCursorToRecent(" ");
+    return moveCursorToPrevious(" ");
 }
 
 function moveToNextSpace() {
     return moveCursorToNext(" ");
 }
+
+function selectParentExpr() {
+    
+}
+
+function deleteSelection() {
+    let text = content.value;
+
+    let start = content.selectionStart;
+    let end = content.selectionEnd;
+
+    let before = text.substring(0, start);
+    let after = text.substring(end);
+
+    content.value = before + after;
+}
+
+// in command mode
+// want to be able to type a character to invoke a function
+// and then type characters to supply arguments
+
+// 
